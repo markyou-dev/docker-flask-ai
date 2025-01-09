@@ -1,0 +1,36 @@
+# 1. /etc/hosts Setting
+#  127.0.0.1 chat-test-local.picksco.com
+#  127.0.0.1 picktalk-local.picksco.com
+# 
+# 2. docker file link
+#   ln -s _docker/docker-compose.yml docker-compose.yml
+#
+# 3. set .env
+#   cp _docker/.env.example .env
+#   vi .env (set your variable)
+#
+# 3. Source Tree
+#   ./_docker/
+#   ./docker-compose.yml (symbolic link -> _docker/docker-compose.yml)
+#   ./.env
+#   ./sock/
+#   ./backend/
+#   ./web/
+# 4. init
+#   cd _docker
+#   init.sh
+# 5. build
+#   docker-compose -p workspace up -d --build
+
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: .
+    container_name: flask_ai_app
+    ports:
+      - "7080:7080"
+    volumes:
+      - ./app:/app
+      - ./data:/data
