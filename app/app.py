@@ -1,70 +1,72 @@
-from flask import Flask, request, render_template
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from flask import Flask, request, jsonify, render_template, send_file, abort
 import os
-import numpy as np
-import subprocess
+from datetime import datetime
+from models import ImgClassifier
+
+class Config:
+    PORT = int(os.environ.get('FLASK_PORT', 5000))
+    DEBUG = bool(int(os.environ.get('FLASK_DEBUG', 1)))
+    UPLOAD_FOLDER = '/usr/src/uploads'
+    MODEL_PATH = '/usr/src/data/save_models/img_classifier.h5'
 
 app = Flask(__name__)
+app.config.from_object(Config)
 
-# 모델 로드 경로
-MODEL_PATH = "cat_dog_model.h5"
+# 업로드 디렉토리 생성
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# 업로드 디렉토리 설정
-UPLOAD_FOLDER = "static/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+# AI 모델 초기화
+classifier = ImgClassifier(app.config['MODEL_PATH'])
 
-
-# 모델이 없을 경우 학습 함수
-def train_model():
-    subprocess.run(["python", "train_cat_dog_model.py"])
-
-
-# 모델이 없으면 학습
-if not os.path.exists(MODEL_PATH):
-    train_model()
-
-
-# 메인
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-# 결과화면
-@app.route("/result", methods=["GET", "POST"])
-def result():
-    file = request.files["file"]
-    if file:
-        filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-        file.save(filepath)
+@app.route('/image/<filename>')
+def serve_image(filename):
+    # 파일의 절대경로 생성
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    
+    # 파일 존재 여부 확인
+    if not os.path.isfile(file_path):
+        abort(404, description="File not found")
+    
+    # 파일 반환
+    return send_file(file_path, mimetype='image/jpeg')  # MIME 타입은 이미지 형식에 맞게 설정
 
-        # 모델 로드s
-        model = load_model(MODEL_PATH)
+@app.route('/predict', methods=['POST'])
+def predict():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    # 파일 저장
+    filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+    result, confidence = classifier.predict(filepath)
 
-        # 예측 수행
-        result, cat_confidence, dog_confidence = predict_image(filepath, model)
-
-        return render_template(
-            "result.html",
-            image_path=filepath,
-            result=result,
-            cat_confidence=cat_confidence,
-            dog_confidence=dog_confidence,
-        )
-
-def predict_image(filepath, model):
-    image = load_img(filepath, target_size=(150, 150))
-    image = img_to_array(image) / 255.0
-    image = np.expand_dims(image, axis=0)
-
-    prediction = model.predict(image)
-    dog_confidence = prediction[0][0]  # 개일 확률
-    cat_confidence = 1 - dog_confidence  # 고양이일 확률
-
-    result = "고양이" if cat_confidence > 0.5 else "개"
-    return result, cat_confidence, dog_confidence
-
+    return render_template(
+        'predict.html',
+        result=result,
+        confidence=confidence,
+        image_path=f"/image/{filename}"
+    )
+    
+    # try:
+    #     # 예측 수행
+    #     result, confidence = classifier.predict(filepath)
+    #     return jsonify({
+    #         'result': result,
+    #         'confidence': float(confidence)
+    #     })
+    # except Exception as e:
+    #     return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7080, debug=True)
+    app.run(host="0.0.0.0", 
+            port=app.config['PORT'],
+            debug=app.config['DEBUG'])

@@ -5,7 +5,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 # 데이터 전처리
 train_datagen = ImageDataGenerator(rescale=1./255)
 train_generator = train_datagen.flow_from_directory(
-    '../data/train',  # 훈련 데이터 폴더
+    '../train/img_classifier',  # 훈련 데이터 폴더
     target_size=(150, 150),
     batch_size=20,
     class_mode='binary'
@@ -33,4 +33,4 @@ model.compile(loss='binary_crossentropy',
 model.fit(train_generator, epochs=10)
 
 # 모델 저장
-model.save('cat_dog_model.h5')
+model.save('../save_models/img_classifier.h5')

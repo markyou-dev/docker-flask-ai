@@ -77,10 +77,7 @@
         <div>
             <p class="txt1">해당 사진은 <strong class="text-toss">'{{ result }}'</strong> 에 가깝습니다.</p>
             <p class="confidence">
-                '고양이' 일 확률: <strong class="text-toss">{{ cat_confidence * 100 | round(2) }}%</strong>
-            </p>
-            <p class="confidence">
-                '개' 일 확률: <strong class="text-toss">{{ dog_confidence * 100 | round(2) }}%</strong>
+                '{{ result}}' 일 확률: <strong class="text-toss">{{ confidence * 100 | round(2) }}%</strong>
             </p>
         </div>
         <img src="{{ image_path }}" alt="Uploaded Image">
