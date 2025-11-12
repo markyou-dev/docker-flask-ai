@@ -1,9 +1,9 @@
 # Default
-**/__pycache__/*
+**/__pycache__/
 *.py[cod]
 
 
 # 제외할 경로
 /logs/
 /data/save_models/
-/uploads/*
+/uploads/
