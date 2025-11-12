@@ -1,0 +1,6 @@
+# Default
+**/__pycache__/
+*.py[cod]
+
+# 모델이 저장되는 경로
+save_models
