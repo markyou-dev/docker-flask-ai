@@ -6,7 +6,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 학습 스크립트 목록 (여러 개 가능)
 TRAIN_SCRIPTS = [
-    os.path.join(BASE_DIR, "models", "img_classifier.py"),
+    # os.path.join(BASE_DIR, "models", "img_classifier.py"),
     os.path.join(BASE_DIR, "models", "rnn_simple_conversation.py"),
     # os.path.join(BASE_DIR, "models", "other_model.py"),  # 추가 가능
 ]
