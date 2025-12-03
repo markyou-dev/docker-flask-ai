@@ -16,7 +16,6 @@ services:
       - ./uploads:/usr/src/uploads
       - ./data:/usr/src/data
       - ./logs:/usr/src/logs
-    environment:
-      - FLASK_PORT=${FLASK_PORT:-5000}
-      - FLASK_DEBUG=1
+    env_file:
+      - .env
     restart: unless-stopped
