@@ -11,4 +11,4 @@ COPY . .
 
 # 실행
 # 컨테이너 시작 시 train.py 실행 후 Flask 실행
-CMD ["bash", "-c", "python ./data/train.py && flask run"]
+CMD ["bash", "-c", "python ./data/train.py && flask run --host=0.0.0.0 --port=$FLASK_PORT"]
