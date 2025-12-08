@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container page-center">
+
+    <div class="ui-card">
+        <h1 class="mb-3">AI 분석 결과</h1>
+        <p>해당 사진은 <strong class="text-primary">'{{ result }}'</strong> 에 가깝습니다.</p>
+        <p class="text-muted">
+            '{{ result }}' 일 확률:
+            <strong class="text-primary">{{ confidence * 100 | round(2) }}%</strong>
+        </p>
+        <img src="{{ image_path }}" class="ui-img" alt="Uploaded Image">
+    </div>
+
+    <a href="{{ url_for('vision.index') }}" class="mt-3 text-primary">
+        <i class="fas fa-redo"></i> 다른 이미지 분석하기
+    </a>
+
+</div>
+{% endblock %}

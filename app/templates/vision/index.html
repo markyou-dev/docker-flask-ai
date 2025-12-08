@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container page-center">
+
+    <h1 class="mb-4"><i class="fas fa-robot"></i> 개 vs 고양이 판별</h1>
+
+    <div class="ui-card">
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('vision.result') }}">
+            <input type="file" name="file" class="ui-file" accept="image/*" required>
+
+            <button type="submit" class="ui-btn-primary">
+                <i class="fas fa-upload"></i>&nbsp;&nbsp;AI로 이미지 분석하기
+            </button>
+        </form>
+    </div>
+
+    <p class="mt-3 text-muted">업로드된 사진을 바탕으로 AI가 개와 고양이를 구분합니다.</p>
+
+</div>
+{% endblock %}

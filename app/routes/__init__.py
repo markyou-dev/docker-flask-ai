@@ -1,9 +1,9 @@
 # 라우팅 모듈
 from .main_routes import bp as main_bp
-from .predict_routes import bp as predict_bp
+from .vision_routes import bp as vision_bp
 
 # 블루프린트 리스트로 관리
 blueprints = [
     main_bp,
-    predict_bp
+    vision_bp
 ]

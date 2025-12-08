@@ -1,70 +1,56 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>개 vs 고양이 분류기</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f7f9fc;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        h1 {
-            color: #333;
-        }
+{% extends "base.html" %}
 
-        form {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+{% block head %}
+<style>
+    /* index 페이지 전용 스타일 */
+    .main-title {
+        margin-top: 40px;
+        text-align: center;
+        font-weight: 700;
+    }
 
-        input[type="file"] {
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            padding: 10px 15px;
-            border-radius: 5px;
-        }
+    .menu-card {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        cursor: pointer;
+        border-radius: 8px;
+    }
 
-        button {
-            width: 100%;
-            background-color: #0a95ff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
+    .menu-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    }
 
-        button:hover {
-            background-color: #0077cc;
-        }
-    </style>
-</head>
+    /* 공통 CSS의 .ui-card 스타일과 일관성 유지 */
+    .menu-card .card-body {
+        padding: 22px;
+    }
+</style>
+{% endblock %}
 
-<body>
-    <h1><i class="fas fa-robot"></i> 개 vs 고양이 판별</h1>
-    <form method="POST" enctype="multipart/form-data" action="/predict">
-        <input type="file" name="file" class="form-control-file" accept="image/*" required>
-        <button type="submit"><i class="fas fa-upload"></i>&nbsp;&nbsp;AI로 이미지 분석하기</button>
-    </form>
-    <p style="margin-top:10px;">업로드된 사진을 바탕으로 AI가 개와 고양이를 구분합니다.</p>
-</body>
+{% block content %}
+<div class="container">
 
-</html>
+    <h2 class="main-title">AI Services Main</h2>
+
+    <p class="text-center text-muted mb-5">
+        다양한 AI 서비스 중 원하는 기능을 선택하세요.
+    </p>
+
+    <div class="row">
+        {% for m in menus %}
+        <div class="col-md-4 mb-4">
+            <a href="{{ m.url }}" style="text-decoration:none; color:inherit;">
+                <div class="card menu-card">
+                    <div class="card-body text-center">
+                        <i class="{{ m.icon }} fa-3x mb-3 text-primary"></i>
+                        <h5 class="card-title">{{ m.title }}</h5>
+                        <p class="card-text text-muted">{{ m.desc }}</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
