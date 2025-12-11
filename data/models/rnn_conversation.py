@@ -4,108 +4,124 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.utils import to_categorical # to_categorical 임포트 추가 (필수)
+from tensorflow.keras.utils import to_categorical
 import os
-import pickle # 👈 토크나이저 저장을 위해 추가
+import pickle
+import json
 
-# 스크립트 기준 절대 경로
+# -------------------------------------------------------------------
+# 1. 경로 및 하이퍼파라미터
+# -------------------------------------------------------------------
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# -------------------------------------------------------------------
-# 1. 경로 설정 및 하이퍼파라미터 정의 (CNN 스타일 유지)
-# -------------------------------------------------------------------
-
-# (User Input, AI Response) 쌍
-CONVERSATIONS = [
-    ("안녕?", "안녕 반가워요."),
-    ("나 오늘 기분 좋아!", "와아, 신나겠다!"),
-    ("토끼는 뭘 먹을까?", "토끼는 당근을 좋아해요."),
-    ("로봇이 뭐야?", "저는 여러분의 친구, 로봇이에요."),
-    ("나 졸려", "잠깐 눈을 붙이는 게 좋겠어요."),
-    ("고마워!", "별말씀을요!")
-] * 30 # 학습 체감을 위해 데이터를 30회 반복하여 늘림
-
-MAX_WORDS = 10000 
-MAX_SEQUENCE_LENGTH = 15
-EMBEDDING_DIM = 100 
-LSTM_UNITS = 128 
-EPOCHS = 30 # 학습 시간 단축을 위해 에포크 조정
-BATCH_SIZE = 4 
-
-# 모델 저장 경로 설정
-save_model_dir = os.path.join(BASE_DIR, '..', 'save_models')
-os.makedirs(save_model_dir, exist_ok=True) # save_models 폴더 없으면 생성
+DATA_PATH = os.path.join(BASE_DIR, '..', 'train', 'rnn_conversation', 'data.json')
+SAVE_MODEL_DIR = os.path.join(BASE_DIR, '..', 'save_models')
+os.makedirs(SAVE_MODEL_DIR, exist_ok=True)
 
 # -------------------------------------------------------------------
-# 2. 데이터 전처리 및 토큰화
+# 학습 하이퍼파라미터 (권장 세팅)
 # -------------------------------------------------------------------
 
-def prepare_data(conversations):
-    """
-    대화 데이터를 토크나이징하고, RNN 학습에 적합한 형태로 변환합니다.
-    """
-    input_texts = [pair[0] for pair in conversations]
-    target_texts = [pair[1] for pair in conversations]
-    
+MAX_WORDS = 10000        
+# 토크나이저가 고려할 최대 단어 수.
+# - 자주 사용되는 상위 10,000 단어만 학습에 사용
+# - 희귀 단어는 <unk>로 대체
+# - 데이터가 적으면 MAX_WORDS를 5000~10000 정도로 낮춰도 충분
+
+MAX_SEQUENCE_LENGTH = 15 
+# 입력과 출력 시퀀스의 최대 길이
+# - 너무 짧으면 문장이 잘릴 수 있음
+# - 너무 길면 패딩이 많아지고 연산 부담 증가
+# - 일반적인 짧은 대화문에서는 15~20 정도 권장
+
+EMBEDDING_DIM = 100      
+# 단어를 벡터로 변환할 때 차원 수
+# - 값이 크면 의미 표현력이 높아지지만 모델 크기와 연산량 증가
+# - 소규모 데이터에는 50~100 정도 적당
+
+LSTM_UNITS = 128         
+# LSTM 레이어 은닉 상태 크기
+# - 값이 크면 모델이 더 많은 패턴을 학습 가능
+# - 데이터가 적으면 과적합 위험 존재
+# - 64~128 사이가 소규모 챗봇에 적합
+
+EPOCHS = 30              
+# 전체 데이터셋을 반복 학습하는 횟수
+# - 값이 작으면 모델이 충분히 학습하지 못함
+# - 값이 크면 과적합 위험
+# - 데이터가 적으면 20~40 정도가 적당
+
+BATCH_SIZE = 4           
+# 한 번에 모델에 입력되는 샘플 수
+# - 작으면 메모리 부담 적고 일반화에 유리
+# - 크면 학습 속도 빨라짐
+# - 소규모 데이터에서는 4~8 정도 추천
+
+# -------------------------------------------------------------------
+# 2. 데이터 로드 및 전처리
+# -------------------------------------------------------------------
+
+def load_conversations(json_path, repeat=1):
+    if not os.path.exists(json_path):
+        raise FileNotFoundError(f"학습 데이터 파일이 없습니다: {json_path}")
+    with open(json_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    input_texts = [item['input'] for item in data] * repeat
+    target_texts = [item['response'] for item in data] * repeat
+    return input_texts, target_texts
+
+def prepare_data(input_texts, target_texts):
     tokenizer = Tokenizer(num_words=MAX_WORDS, oov_token="<unk>")
     tokenizer.fit_on_texts(input_texts + target_texts) 
     
     input_sequences = tokenizer.texts_to_sequences(input_texts)
     target_sequences = tokenizer.texts_to_sequences(target_texts)
-    
+
     X = pad_sequences(input_sequences, maxlen=MAX_SEQUENCE_LENGTH, padding='post')
-    Y_sequences = pad_sequences(target_sequences, maxlen=MAX_SEQUENCE_LENGTH, padding='post')
+    Y_seq = pad_sequences(target_sequences, maxlen=MAX_SEQUENCE_LENGTH, padding='post')
 
     # Y를 원-핫 인코딩하여 RNN의 출력 형식에 맞춤
     vocab_size = len(tokenizer.word_index) + 1
-    Y = to_categorical(Y_sequences, num_classes=vocab_size)
-                
+    Y = to_categorical(Y_seq, num_classes=vocab_size)
+
     return X, Y, tokenizer, vocab_size
 
 # -------------------------------------------------------------------
-# 3. RNN 모델 구축 및 학습
+# 3. RNN 모델 구축
 # -------------------------------------------------------------------
 
 def build_rnn_model(vocab_size):
-    """
-    가장 기본적인 시퀀스 투 시퀀스(Sequence-to-Sequence) 구조의 RNN 모델을 정의합니다.
-    """
     model = Sequential([
         Embedding(vocab_size, EMBEDDING_DIM, input_length=MAX_SEQUENCE_LENGTH),
-        LSTM(LSTM_UNITS, return_sequences=True), 
+        LSTM(LSTM_UNITS, return_sequences=True),
         Dropout(0.2),
         Dense(vocab_size, activation='softmax')
     ])
-    
-    model.compile(optimizer='adam', 
-                  loss='categorical_crossentropy', 
-                  metrics=['accuracy'])
-
-    # 👈 이 라인을 추가하여 모델을 수동으로 빌드합니다.
-    # input_shape는 (배치 사이즈는 제외하고) (MAX_SEQUENCE_LENGTH) 입니다.
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     model.build(input_shape=(None, MAX_SEQUENCE_LENGTH))
-                  
     return model
 
 # -------------------------------------------------------------------
-# 4. 학습 실행 및 저장 (순수 학습 로직)
+# 4. 학습 및 저장
 # -------------------------------------------------------------------
 
 def main_train_and_save():
-    X, Y, tokenizer, vocab_size = prepare_data(CONVERSATIONS)
+    input_texts, target_texts = load_conversations(DATA_PATH, 30)
+    X, Y, tokenizer, vocab_size = prepare_data(input_texts, target_texts)
+
     model = build_rnn_model(vocab_size)
-    
-    # 모델 학습 (CNN 때와 동일한 model.fit() 함수 사용)
     print(f"[INFO] RNN 모델 학습 시작. 파라미터 수: {model.count_params()}")
     model.fit(X, Y, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1)
-    
+
     # 모델 저장
-    model_path = os.path.join(save_model_dir, 'rnn_conversation_model.h5')
+    model_path = os.path.join(SAVE_MODEL_DIR, 'rnn_conversation_model.h5')
     model.save(model_path)
-    print(f"\n[INFO] 모델 저장 완료: {model_path}")
-    
-    # 👈 추론 시 필수! 토크나이저 저장
-    tokenizer_path = os.path.join(save_model_dir, 'rnn_tokenizer.pkl')
+    print(f"[INFO] 모델 저장 완료: {model_path}")
+
+    # 토크나이저 저장
+    tokenizer_path = os.path.join(SAVE_MODEL_DIR, 'rnn_tokenizer.pkl')
     with open(tokenizer_path, 'wb') as f:
         pickle.dump(tokenizer, f)
     print(f"[INFO] 토크나이저 저장 완료: {tokenizer_path}")
