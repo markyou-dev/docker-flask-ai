@@ -12,6 +12,12 @@ def index():
             "icon": "fas fa-camera",
             "url": "/vision"
         },
+        {
+            "title": "RNN 채팅",
+            "desc": "RNN 대화형 학습모델로 채팅을 진행합니다.",
+            "icon": "fas fa-robot",
+            "url": "/rnn"
+        },
     ]
     return render_template('index.html', menus=menus)
 

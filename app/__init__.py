@@ -3,6 +3,7 @@ from flask import Flask
 from .config import Config
 from .routes import blueprints
 from .models.img_classifier import ImgClassifier
+from .models.rnn_conversation import RnnConversation
 import os
 
 def create_app():
@@ -13,7 +14,14 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     # AI 모델 초기화
-    app.classifier = ImgClassifier(app.config['MODEL_PATH'])
+    # 이미지 모델
+    app.classifier = ImgClassifier(app.config["IMG_MODEL_PATH"])
+
+    # RNN 모델
+    app.rnn = RnnConversation(
+        model_path=app.config["RNN_MODEL_PATH"],
+        tokenizer_path=app.config["RNN_TOKENIZER_PATH"]
+    )
 
     # 블루프린트 등록
     for bp in blueprints:

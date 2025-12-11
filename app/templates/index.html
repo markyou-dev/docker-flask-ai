@@ -1,56 +1,40 @@
 {% extends "base.html" %}
 
-{% block head %}
-<style>
-    /* index 페이지 전용 스타일 */
-    .main-title {
-        margin-top: 40px;
-        text-align: center;
-        font-weight: 700;
-    }
-
-    .menu-card {
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-        cursor: pointer;
-        border-radius: 8px;
-    }
-
-    .menu-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-    }
-
-    /* 공통 CSS의 .ui-card 스타일과 일관성 유지 */
-    .menu-card .card-body {
-        padding: 22px;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container">
+<main class="container py-5">
 
-    <h2 class="main-title">AI Services Main</h2>
-
-    <p class="text-center text-muted mb-5">
-        다양한 AI 서비스 중 원하는 기능을 선택하세요.
-    </p>
-
-    <div class="row">
-        {% for m in menus %}
-        <div class="col-md-4 mb-4">
-            <a href="{{ m.url }}" style="text-decoration:none; color:inherit;">
-                <div class="card menu-card">
-                    <div class="card-body text-center">
-                        <i class="{{ m.icon }} fa-3x mb-3 text-primary"></i>
-                        <h5 class="card-title">{{ m.title }}</h5>
-                        <p class="card-text text-muted">{{ m.desc }}</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-        {% endfor %}
+    <!-- 제목 -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">AI Services Main</h2>
+        <p class="text-muted">다양한 AI 서비스를 선택해 사용해보세요.</p>
     </div>
 
-</div>
+    <!-- 카드 그리드 -->
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+
+        {% for m in menus %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+
+                <div class="card-body text-center">
+                    <i class="{{ m.icon }} fa-3x text-primary mb-3"></i>
+
+                    <h5 class="card-title fw-bold">{{ m.title }}</h5>
+                    <p class="card-text text-muted">{{ m.desc }}</p>
+                </div>
+
+                <!-- 버튼 하단 고정 -->
+                <div class="card-footer bg-white border-0 text-center">
+                    <a href="{{ m.url }}" class="btn btn-primary w-100">
+                        이동하기
+                    </a>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+</main>
 {% endblock %}

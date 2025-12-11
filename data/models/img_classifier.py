@@ -43,6 +43,6 @@ model.compile(
 model.fit(train_generator, epochs=10)
 
 # 모델 저장
-model_path = os.path.join(save_model_dir, 'img_classifier.h5')
+model_path = os.path.join(save_model_dir, 'img_classifier_model.h5')
 model.save(model_path)
 print(f"[INFO] 모델 저장 완료: {model_path}")
